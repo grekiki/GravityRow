@@ -46,10 +46,10 @@ public class Main extends PApplet{
 		for(int i=0; i<gravity.size(); i++){
 			animation q=gravity.get(i);
 			if(q.done>=q.work||(q.x1==q.x2&&q.y1==q.y2)){
-				d.fplace(q.x2,q.y2);
+				d.fplace(q.x2,q.y2,q.red);
 				gravity.removeElement(q);
 			}else{
-				fill(255,255,0);
+				fill(q.red?255:0,0,q.red?0:255);
 				float x=(q.x1+(q.x2-q.x1)*((float)q.done)/q.work)*dx/10;
 				float y=(q.y1+(q.y2-q.y1)*((float)q.done)/q.work)*dy/10;
 				rect(x,y,dx/10,dy/10);
@@ -81,13 +81,15 @@ public class Main extends PApplet{
 class animation{
 	int x1,x2,y1,y2;
 	int work,done;
-	animation(int a,int b,int c,int d){
+	boolean red;
+	animation(int a,int b,int c,int d,boolean e){
 		x1=a;
 		x2=c;
 		y1=b;
 		y2=d;
 		work=100*(x2-x1)*(x2-x1)+100*(y2-y1)*(y2-y1);
 		done=0;
+		red=e;
 	}
 }
 class colour{
@@ -102,24 +104,28 @@ class colour{
 }
 class data{
 	int[][] grid={{1,0,0,0,0,0,0,0,0,1},{0,1,0,0,0,0,0,0,1,0},{0,0,1,0,0,0,0,1,0,0},{0,0,0,1,0,0,1,0,0,0},{0,0,0,0,2,2,0,0,0,0},{0,0,0,0,2,2,0,0,0,0},{0,0,0,1,0,0,1,0,0,0},{0,0,1,0,0,0,0,1,0,0},{0,1,0,0,0,0,0,0,1,0},{1,0,0,0,0,0,0,0,0,1},};
+	AI smart=new AI(grid);
 	boolean[][]filled=new boolean[10][10];
 	boolean redToMove=true;
 	animation attemptPlacement(int i,int j){
 		if(i==j||i==9-j){
 			place(i,j);
-			return new animation(i,j,i,j);
+			redToMove=!redToMove;
+			return new animation(i,j,i,j,!redToMove);
 		}
 		if(i>j){
 			if(i<9-j){
 				for(int q=0; q<=j; q++){
 					if(place(i,q)){
-						return new animation(i,j,i,q);
+						redToMove=!redToMove;
+						return new animation(i,j,i,q,!redToMove);
 					}
 				}
 			}else{
 				for(int q=9; q>=i; q--){
 					if(place(q,j)){
-						return new animation(i,j,q,j);
+						redToMove=!redToMove;
+						return new animation(i,j,q,j,!redToMove);
 					}
 				}
 			}
@@ -127,19 +133,21 @@ class data{
 			if(i<9-j){
 				for(int q=0; q<=i; q++){
 					if(place(q,j)){
-						System.out.println(i+" "+j+" "+q+" "+j);
-						return new animation(i,j,q,j);
+						redToMove=!redToMove;
+						return new animation(i,j,q,j,!redToMove);
 					}
 				}
 			}else{
 				for(int q=9; q>=j; q--){
 					if(place(i,q)){
-						return new animation(i,j,i,q);
+						redToMove=!redToMove;
+						return new animation(i,j,i,q,!redToMove);
 					}
 				}
 			}
 		}
-		return new animation(-1,-1,-1,-1);
+		redToMove=!redToMove;
+		return new animation(-1,-1,-1,-1,!redToMove);
 		
 	}
 	boolean place(int i,int j){
@@ -150,67 +158,66 @@ class data{
 		filled[i][j]=true;
 		return true;
 	}
-	void fplace(int i,int j){
+	void fplace(int i,int j,boolean r){
 		if(i!=-1&&j!=-1){
-			grid[i][j]=redToMove ? 3 : 4;
-			redToMove=!redToMove;
+			grid[i][j]=r? 3 : 4;
 		}
 	}
 	int winner(){
 		int c=3;
-		for(int i=0; i<5; i++){
-			for(int j=0; j<9; j++){
+		for(int i=0; i<7; i++){
+			for(int j=0; j<10; j++){
 				if(grid[i][j]==c&&grid[i+1][j]==c&&grid[i+2][j]==c&&grid[i+3][j]==c){
 					return 1;
 				}
 			}
 		}
-		for(int i=0; i<9; i++){
-			for(int j=0; j<5; j++){
+		for(int i=0; i<10; i++){
+			for(int j=0; j<7; j++){
 				if(grid[i][j]==c&&grid[i][j+1]==c&&grid[i][j+2]==c&&grid[i][j+3]==c){
 					return 1;
 				}
 			}
 		}
-		for(int i=0; i<5; i++){
-			for(int j=0; j<5; j++){
+		for(int i=0; i<7; i++){
+			for(int j=0; j<7; j++){
 				if(grid[i][j]==c&&grid[i+1][j+1]==c&&grid[i+2][j+2]==c&&grid[i+3][j+3]==c){
 					return 1;
 				}
 			}
 		}
-		for(int i=4; i<9; i++){
-			for(int j=4; j<9; j++){
-				if(grid[i][j]==c&&grid[i-1][j-1]==c&&grid[i-2][j-2]==c&&grid[i-3][j-3]==c){
+		for(int i=3; i<10; i++){
+			for(int j=0; j<7; j++){
+				if(grid[i][j]==c&&grid[i-1][j+1]==c&&grid[i-2][j+2]==c&&grid[i-3][j+3]==c){
 					return 1;
 				}
 			}
 		}
 		c=4;
-		for(int i=0; i<5; i++){
-			for(int j=0; j<9; j++){
+		for(int i=0; i<7; i++){
+			for(int j=0; j<10; j++){
 				if(grid[i][j]==c&&grid[i+1][j]==c&&grid[i+2][j]==c&&grid[i+3][j]==c){
 					return 2;
 				}
 			}
 		}
-		for(int i=0; i<9; i++){
-			for(int j=0; j<5; j++){
+		for(int i=0; i<10; i++){
+			for(int j=0; j<7; j++){
 				if(grid[i][j]==c&&grid[i][j+1]==c&&grid[i][j+2]==c&&grid[i][j+3]==c){
 					return 2;
 				}
 			}
 		}
-		for(int i=0; i<5; i++){
-			for(int j=0; j<5; j++){
+		for(int i=0; i<7; i++){
+			for(int j=0; j<7; j++){
 				if(grid[i][j]==c&&grid[i+1][j+1]==c&&grid[i+2][j+2]==c&&grid[i+3][j+3]==c){
 					return 2;
 				}
 			}
 		}
-		for(int i=4; i<9; i++){
-			for(int j=4; j<9; j++){
-				if(grid[i][j]==c&&grid[i-1][j-1]==c&&grid[i-2][j-2]==c&&grid[i-3][j-3]==c){
+		for(int i=3; i<10; i++){
+			for(int j=0; j<7; j++){
+				if(grid[i][j]==c&&grid[i-1][j+1]==c&&grid[i-2][j+2]==c&&grid[i-3][j+3]==c){
 					return 2;
 				}
 			}
@@ -218,3 +225,25 @@ class data{
 		return -1;
 	}
 }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
