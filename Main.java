@@ -35,6 +35,11 @@ public class Main extends PApplet{
 		double d=(Math.sqrt(1+4*n)-1)/2;
 		return (int)Math.round(d);
 	}
+	public void aiMove() {
+		tuple t=d.smart.bestMove();
+		delay(200);
+		gravity.addElement(d.attemptPlacement(t.x,t.y));
+	}
 	public void draw(){
 		for(int i=0; i<10; i++){
 			for(int j=0; j<10; j++){
@@ -45,7 +50,7 @@ public class Main extends PApplet{
 		}
 		for(int i=0; i<gravity.size(); i++){
 			animation q=gravity.get(i);
-			if(q.done>=q.work||(q.x1==q.x2&&q.y1==q.y2)){
+			if(q.done>=q.work){
 				d.fplace(q.x2,q.y2,q.red);
 				gravity.removeElement(q);
 			}else{
@@ -56,6 +61,12 @@ public class Main extends PApplet{
 				q.done+=1+tri(q.done);
 			}
 		}
+		//ai debug
+		tuple t=d.smart.evaluate();
+		textFont(f);
+		fill(255,255,0);
+		text(t.x+" "+t.y+" "+(t.y-t.x),50,50);
+		// /ai debug
 		if(d.winner()!=-1){
 			textFont(f);
 			fill(127,127,127);
@@ -63,6 +74,9 @@ public class Main extends PApplet{
 			fill(0,0,0);
 			text("Zmagal je igralec "+d.winner(),dx/2-300,dy/2);
 			reset=true;
+		}
+		if(d.redToMove&&gravity.size()==0){
+			aiMove();
 		}
 	}
 	public void mousePressed(){
@@ -76,7 +90,9 @@ public class Main extends PApplet{
 		int j=10*y/dy;
 		gravity.addElement(d.attemptPlacement(i,j));
 	}
-
+	public void keyPressed() {
+		int r=key-'a';
+	}
 }
 class animation{
 	int x1,x2,y1,y2;
@@ -87,7 +103,7 @@ class animation{
 		x2=c;
 		y1=b;
 		y2=d;
-		work=100*(x2-x1)*(x2-x1)+100*(y2-y1)*(y2-y1);
+		work=100*(x2-x1)*(x2-x1)+100*(y2-y1)*(y2-y1)+1;
 		done=0;
 		red=e;
 	}
@@ -103,11 +119,14 @@ class colour{
 	}
 }
 class data{
-	int[][] grid={{1,0,0,0,0,0,0,0,0,1},{0,1,0,0,0,0,0,0,1,0},{0,0,1,0,0,0,0,1,0,0},{0,0,0,1,0,0,1,0,0,0},{0,0,0,0,2,2,0,0,0,0},{0,0,0,0,2,2,0,0,0,0},{0,0,0,1,0,0,1,0,0,0},{0,0,1,0,0,0,0,1,0,0},{0,1,0,0,0,0,0,0,1,0},{1,0,0,0,0,0,0,0,0,1},};
-	AI smart=new AI(grid);
+	int[][] grid={{1,0,0,0,0,0,0,0,0,1},{0,1,0,0,0,0,0,0,1,0},{0,0,1,0,0,0,0,1,0,0},{0,0,0,1,0,0,1,0,0,0},{0,0,0,0,2,2,0,0,0,0},{0,0,0,0,2,2,0,0,0,0},{0,0,0,1,0,0,1,0,0,0},{0,0,1,0,0,0,0,1,0,0},{0,1,0,0,0,0,0,0,1,0},{1,0,0,0,0,0,0,0,0,1}};
+	AIeasy smart=new AIeasy();
 	boolean[][]filled=new boolean[10][10];
-	boolean redToMove=true;
+	boolean redToMove=false;
 	animation attemptPlacement(int i,int j){
+		if(grid[i][j]>=2){
+			return new animation(-1,-1,-1,-1,!redToMove);
+		}
 		if(i==j||i==9-j){
 			place(i,j);
 			redToMove=!redToMove;
@@ -146,7 +165,6 @@ class data{
 				}
 			}
 		}
-		redToMove=!redToMove;
 		return new animation(-1,-1,-1,-1,!redToMove);
 		
 	}
@@ -161,6 +179,7 @@ class data{
 	void fplace(int i,int j,boolean r){
 		if(i!=-1&&j!=-1){
 			grid[i][j]=r? 3 : 4;
+			smart.move(i,j,r);
 		}
 	}
 	int winner(){
@@ -225,24 +244,6 @@ class data{
 		return -1;
 	}
 }
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 
 
