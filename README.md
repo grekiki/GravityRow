@@ -1,2 +1,2 @@
 # GravityRow
-4 in a row with circular gravity. AI WIP.
+4 in a row with circular gravity. AI should easily beat you. Just have to make a bad one...
