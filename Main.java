@@ -9,6 +9,7 @@ public class Main extends PApplet{
 	int dx;
 	int dy;
 	PFont f;
+	int difficulty=2;
 	Vector<animation> gravity=new Vector<animation>();
 	public static void main(String[] args){
 		PApplet.main("Main");
@@ -36,9 +37,20 @@ public class Main extends PApplet{
 		return (int)Math.round(d);
 	}
 	public void aiMove() {
-		tuple t=d.smart.bestMove();
-		delay(200);
-		gravity.addElement(d.attemptPlacement(t.x,t.y));
+		if(difficulty==1) {
+			
+		}else if(difficulty==2) {
+			tuple t=d.smart.bestMoveMedium();
+			delay(400);
+			gravity.addElement(d.attemptPlacement(t.x,t.y));
+		}else if(difficulty==3) {
+			tuple t=d.smart.bestMoveHard();
+			delay(200);
+			gravity.addElement(d.attemptPlacement(t.x,t.y));
+		}else if(difficulty==4) {
+			tuple t=d.smart.bestMoveHard();
+			gravity.addElement(d.attemptPlacement(t.x,t.y));
+		}
 	}
 	public void draw(){
 		for(int i=0; i<10; i++){
@@ -75,23 +87,26 @@ public class Main extends PApplet{
 			text("Zmagal je igralec "+d.winner(),dx/2-300,dy/2);
 			reset=true;
 		}
-		if(d.redToMove&&gravity.size()==0){
+		if(d.redToMove&&gravity.size()==0&&!reset){
 			aiMove();
 		}
 	}
 	public void mousePressed(){
 		if(reset){
 			setup();
-			return;
-		}
+		}else {
 		int x=mouseX;
 		int y=mouseY;
 		int i=10*x/dx;
 		int j=10*y/dy;
 		gravity.addElement(d.attemptPlacement(i,j));
+		}
 	}
 	public void keyPressed() {
 		int r=key-'a';
+		if(r==0) {
+			System.out.println("break");
+		}
 	}
 }
 class animation{
@@ -120,9 +135,10 @@ class colour{
 }
 class data{
 	int[][] grid={{1,0,0,0,0,0,0,0,0,1},{0,1,0,0,0,0,0,0,1,0},{0,0,1,0,0,0,0,1,0,0},{0,0,0,1,0,0,1,0,0,0},{0,0,0,0,2,2,0,0,0,0},{0,0,0,0,2,2,0,0,0,0},{0,0,0,1,0,0,1,0,0,0},{0,0,1,0,0,0,0,1,0,0},{0,1,0,0,0,0,0,0,1,0},{1,0,0,0,0,0,0,0,0,1}};
-	AIeasy smart=new AIeasy();
+	AI smart=new AI(0,10,1000,100000,0.45);
+	
 	boolean[][]filled=new boolean[10][10];
-	boolean redToMove=false;
+	boolean redToMove=true;
 	animation attemptPlacement(int i,int j){
 		if(grid[i][j]>=2){
 			return new animation(-1,-1,-1,-1,!redToMove);
