@@ -1,16 +1,12 @@
 import java.util.ArrayList;
-import java.util.Vector;
-
 class tuple {
 	int x;
 	int y;
-
 	tuple(int a, int b) {
 		x = a;
 		y = b;
 	}
 }
-
 class r4p {
 	int x0;
 	int y0;
@@ -20,7 +16,6 @@ class r4p {
 	int blue;
 	int block;
 	int empty;
-
 	int score(boolean r, int a, int b, int c, int d) {
 		int me = r ? red : blue;
 		int opp = r ? blue : red;
@@ -29,7 +24,6 @@ class r4p {
 		}
 		return opp == 0 ? 0 : (opp == 1 ? a : (opp == 2 ? b : (opp == 3 ? c : (r ? 100000000 : d))));
 	}
-
 	r4p(int a, int b, int c, int d) {
 		x0 = a;
 		x1 = c;
@@ -40,7 +34,6 @@ class r4p {
 		block = 0;
 		empty = 0;
 	}
-
 	tuple[] walk() {
 		tuple[] q = new tuple[4];
 		if (x1 != x0) {// garantiramo x1>x0
@@ -55,16 +48,22 @@ class r4p {
 		return q;
 	}
 }
-
 class AI {
 	int[] settings = new int[4];
 	double attack;
 	int infty = 1000000000;
 	boolean fm = true;// first move
-	private int[][] grid = { { 1, 1, 1, 1, 1, 1, 1, 1, 1, 1 }, { 1, 1, 0, 0, 0, 0, 0, 0, 1, 1 },
-			{ 1, 0, 1, 0, 0, 0, 0, 1, 0, 1 }, { 1, 0, 0, 1, 0, 0, 1, 0, 0, 1 }, { 1, 0, 0, 0, 2, 2, 0, 0, 0, 1 },
-			{ 1, 0, 0, 0, 2, 2, 0, 0, 0, 1 }, { 1, 0, 0, 1, 0, 0, 1, 0, 0, 1 }, { 1, 0, 1, 0, 0, 0, 0, 1, 0, 1 },
-			{ 1, 1, 0, 0, 0, 0, 0, 0, 1, 1 }, { 1, 1, 1, 1, 1, 1, 1, 1, 1, 1 } };
+	private int[][] grid = { 
+			{ 1, 1, 1, 1, 1, 1, 1, 1, 1, 1 },
+			{ 1, 1, 0, 0, 0, 0, 0, 0, 1, 1 },
+			{ 1, 0, 1, 0, 0, 0, 0, 1, 0, 1 },
+			{ 1, 0, 0, 1, 0, 0, 1, 0, 0, 1 },
+			{ 1, 0, 0, 0, 2, 2, 0, 0, 0, 1 },
+			{ 1, 0, 0, 0, 2, 2, 0, 0, 0, 1 },
+			{ 1, 0, 0, 1, 0, 0, 1, 0, 0, 1 },
+			{ 1, 0, 1, 0, 0, 0, 0, 1, 0, 1 },
+			{ 1, 1, 0, 0, 0, 0, 0, 0, 1, 1 },
+			{ 1, 1, 1, 1, 1, 1, 1, 1, 1, 1 } };
 	ArrayList<r4p> combo = new ArrayList<r4p>(217);
 	ArrayList<Integer>[][] pointers = new ArrayList[10][10];
 	void invert() {
@@ -214,10 +213,10 @@ class AI {
 			}
 		}
 	}
-	tuple bestMoveMedium() {
+	tuple bestMoveEasy() {
 		if (fm) {
 			fm = false;
-			return new tuple(3, 0);
+			return fm();
 		}
 		long t0 = System.nanoTime();
 		tuple solution = null;
@@ -225,6 +224,32 @@ class AI {
 		int bestPossible = -infty;
 		for (tuple q : moves) {
 			tuple reset = move(q.x, q.y, true);
+			int min = eval();
+			if (min > bestPossible) {
+				bestPossible = min;
+				solution = q;
+			}
+			reverseMove(q.x, q.y, reset);
+		}
+		long t1 = System.nanoTime();
+		//System.out.println((t1 - t0) / 1000000);
+		return solution;
+	}
+	tuple bestMoveMedium() {
+		if (fm) {
+			fm = false;
+			return fm();
+		}
+		long t0 = System.nanoTime();
+		tuple solution = null;
+		ArrayList<tuple> moves = moves();
+		int bestPossible = -infty;
+		for (tuple q : moves) {
+			tuple reset = move(q.x, q.y, true);
+			if(winner()==1) {
+				reverseMove(q.x, q.y, reset);
+				return q;
+			}
 			int min = infty;
 			ArrayList<tuple> moves2 = moves();
 			for (tuple q2 : moves2) {
@@ -239,7 +264,7 @@ class AI {
 			reverseMove(q.x, q.y, reset);
 		}
 		long t1 = System.nanoTime();
-		System.out.println((t1 - t0) / 1000000);
+		//System.out.println((t1 - t0) / 1000000);
 		return solution;
 	}
 	boolean useless(tuple p) {
@@ -255,7 +280,7 @@ class AI {
 	tuple bestMoveHard() {
 		if (fm) {
 			fm = false;
-			return new tuple(3, 0);
+			return fm();
 		}
 		long t0 = System.nanoTime();
 		tuple solution = null;
@@ -265,18 +290,32 @@ class AI {
 			if (useless(q))
 				continue;
 			tuple reset = move(q.x, q.y, true);
+			if(winner()==1) {
+				reverseMove(q.x, q.y, reset);
+				return q;
+			}
 			int min = infty;
 			ArrayList<tuple> moves2 = moves();
 			for (tuple q2 : moves2) {
 				if (useless(q2))
 					continue;
 				tuple reset2 = move(q2.x, q2.y, false);
+				if(winner()==2) {
+					reverseMove(q2.x, q2.y, reset2);
+					min=-infty;
+					break;
+				}
 				int max = -infty;
 				ArrayList<tuple> moves3 = moves();
 				for (tuple q3 : moves3) {
 					if (useless(q3))
 						continue;
 					tuple reset3 = move(q3.x, q3.y, true);
+					if(winner()==1) {
+						reverseMove(q3.x, q3.y, reset3);
+						max=infty;
+						break;
+					}
 					int min2 = infty;
 					ArrayList<tuple> moves4 = moves();
 					for (tuple q4 : moves4) {
@@ -348,7 +387,7 @@ class AI {
 	tuple bestMoveVeryHard() {
 		if (fm) {
 			fm = false;
-			return new tuple(3, 0);
+			return fm();
 		}
 		long t0 = System.nanoTime();
 		double[] aggr = { 0.2, 0.45, 0.55, 0.7 };
@@ -362,18 +401,32 @@ class AI {
 				if (useless(q))
 					continue;
 				tuple reset = move(q.x, q.y, true);
+				if(winner()==1) {
+					reverseMove(q.x, q.y, reset);
+					return q;
+				}
 				int min = infty;
 				ArrayList<tuple> moves2 = moves();
 				for (tuple q2 : moves2) {
 					if (useless(q2))
 						continue;
 					tuple reset2 = move(q2.x, q2.y, false);
+					if(winner()==2) {
+						reverseMove(q2.x, q2.y, reset2);
+						min=-infty;
+						break;
+					}
 					int max = -infty;
 					ArrayList<tuple> moves3 = moves();
 					for (tuple q3 : moves3) {
 						if (useless(q3))
 							continue;
 						tuple reset3 = move(q3.x, q3.y, true);
+						if(winner()==1) {
+							reverseMove(q3.x, q3.y, reset3);
+							max=infty;
+							break;
+						}
 						int min2 = infty;
 						ArrayList<tuple> moves4 = moves();
 						for (tuple q4 : moves4) {
@@ -420,4 +473,106 @@ class AI {
 		//System.out.println((t1 - t0) / 1000000);
 		return best;
 	}
+	tuple fm() {
+		tuple[]q= {new tuple(0,3),new tuple(0,4),new tuple(0,5),new tuple(0,6),new tuple(9,3),new tuple(9,4),new tuple(9,5),new tuple(9,6),
+				new tuple(3,0),new tuple(4,0),new tuple(5,0),new tuple(6,0),new tuple(3,9),new tuple(4,9),new tuple(5,9),new tuple(6,9)};
+		int qq=(int)Math.floor(q.length*Math.random());
+		return q[qq];
+	}
+	int winner() {
+		int c = 3;
+		for (int i = 0; i < 7; i++) {
+			for (int j = 0; j < 10; j++) {
+				if (grid[i][j] == c && grid[i + 1][j] == c
+						&& grid[i + 2][j] == c && grid[i + 3][j] == c) {
+					return 1;
+				}
+			}
+		}
+		for (int i = 0; i < 10; i++) {
+			for (int j = 0; j < 7; j++) {
+				if (grid[i][j] == c && grid[i][j + 1] == c
+						&& grid[i][j + 2] == c && grid[i][j + 3] == c) {
+					return 1;
+				}
+			}
+		}
+		for (int i = 0; i < 7; i++) {
+			for (int j = 0; j < 7; j++) {
+				if (grid[i][j] == c && grid[i + 1][j + 1] == c
+						&& grid[i + 2][j + 2] == c && grid[i + 3][j + 3] == c) {
+					return 1;
+				}
+			}
+		}
+		for (int i = 3; i < 10; i++) {
+			for (int j = 0; j < 7; j++) {
+				if (grid[i][j] == c && grid[i - 1][j + 1] == c
+						&& grid[i - 2][j + 2] == c && grid[i - 3][j + 3] == c) {
+					return 1;
+				}
+			}
+		}
+		c = 4;
+		for (int i = 0; i < 7; i++) {
+			for (int j = 0; j < 10; j++) {
+				if (grid[i][j] == c && grid[i + 1][j] == c
+						&& grid[i + 2][j] == c && grid[i + 3][j] == c) {
+					return 2;
+				}
+			}
+		}
+		for (int i = 0; i < 10; i++) {
+			for (int j = 0; j < 7; j++) {
+				if (grid[i][j] == c && grid[i][j + 1] == c
+						&& grid[i][j + 2] == c && grid[i][j + 3] == c) {
+					return 2;
+				}
+			}
+		}
+		for (int i = 0; i < 7; i++) {
+			for (int j = 0; j < 7; j++) {
+				if (grid[i][j] == c && grid[i + 1][j + 1] == c
+						&& grid[i + 2][j + 2] == c && grid[i + 3][j + 3] == c) {
+					return 2;
+				}
+			}
+		}
+		for (int i = 3; i < 10; i++) {
+			for (int j = 0; j < 7; j++) {
+				if (grid[i][j] == c && grid[i - 1][j + 1] == c
+						&& grid[i - 2][j + 2] == c && grid[i - 3][j + 3] == c) {
+					return 2;
+				}
+			}
+		}
+		return -1;
+	}
 }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
